@@ -1,0 +1,14 @@
+# Mplus output and data files (large, machine-generated)
+*.out
+*.dat
+*.inp
+
+# R session and workspace artefacts
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+
+# OS noise
+.DS_Store
+Thumbs.db

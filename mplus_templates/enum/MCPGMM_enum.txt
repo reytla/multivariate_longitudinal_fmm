@@ -1,0 +1,206 @@
+! =============================================================================
+! MCPGMM_enum.txt: MplusAutomation template
+! -----------------------------------------------------------------------------
+! Fitted model: Multivariate Covariance Pattern Growth Mixture Model (MCPGMM)
+! Purpose:      Class enumeration (K = 1..6) across all replications
+!
+! Model constraints:
+!   - Quadratic polynomial time trend (free means per class)
+!   - No random effects (IY-QY@0)
+!   - Time-specific residual variances (freely estimated: Y1(vary1) etc.)
+!   - Full within-outcome cross-time residual covariances (all Y_i WITH Y_j)
+!   - Separate between-outcome contemporaneous covariances (Y_t WITH Z_t,
+!     freely estimated at each time point)
+!
+! This is the most flexible of the three models.
+! =============================================================================
+
+[[init]]
+iterators = model replication classes;
+model = 1;
+replication = 1:200;
+classes = 1:6;
+modelnames#model = "MCPGMM";
+filename= "[[classes]]-class_[[modelnames#model]]_[[replication]].inp";
+outputDirectory = "PATH_TO_DATA_DIR/[[modelnames#model]]/[[replication]]";
+[[/init]]
+
+TITLE: [[classes]]-class [[modelnames#model]] rep [[replication]]
+DATA: FILE IS "PATH_TO_DATA_DIR/Data/Mplus_[[replication]].dat";
+
+VARIABLE:
+  NAMES = repl Y1 Y2 Y3 Y4 Y5 Z1 Z2 Z3 Z4 Z5 class_m id;
+  MISSING = .;
+  IDVARIABLE IS id;
+  USEVAR = Y1 Y2 Y3 Y4 Y5 Z1 Z2 Z3 Z4 Z5;
+  [[model = 1]]
+  CLASSES = cy([[classes]]);
+  [[/model = 1]]
+
+ANALYSIS:
+  TYPE = MIXTURE;
+  ESTIMATOR = MLR;
+  PROCESSORS = 4 (STARTS);
+  PARAMETERIZATION = LOGLINEAR;
+  [[model = 1]]
+  STARTS = 1000 250;
+  STITERATIONS = 20;
+  STSCALE = 1;
+  [[/model = 1]]
+
+MODEL: %OVERALL%
+
+  IY SY QY | Y1@0 Y2@1.75 Y3@3.5 Y4@5.25 Y5@7;
+  IY-QY@0;
+  ! Within-outcome: all pairwise cross-time residual covariances (constrained equal)
+  Y1 WITH Y2 (woy1);
+  Y1 WITH Y3 (woy2);
+  Y1 WITH Y4 (woy3);
+  Y1 WITH Y5 (woy4);
+  Y2 WITH Y3 (woy5);
+  Y2 WITH Y4 (woy6);
+  Y2 WITH Y5 (woy7);
+  Y3 WITH Y4 (woy8);
+  Y3 WITH Y5 (woy9);
+  Y4 WITH Y5 (woy10);
+  Y1 (vary1);   ! Time-specific residual variances
+  Y2 (vary2);
+  Y3 (vary3);
+  Y4 (vary4);
+  Y5 (vary5);
+
+  IZ SZ QZ | Z1@0 Z2@1.75 Z3@3.5 Z4@5.25 Z5@7;
+  IZ-QZ@0;
+  Z1 WITH Z2 (woz1);
+  Z1 WITH Z3 (woz2);
+  Z1 WITH Z4 (woz3);
+  Z1 WITH Z5 (woz4);
+  Z2 WITH Z3 (woz5);
+  Z2 WITH Z4 (woz6);
+  Z2 WITH Z5 (woz7);
+  Z3 WITH Z4 (woz8);
+  Z3 WITH Z5 (woz9);
+  Z4 WITH Z5 (woz10);
+  Z1 (varz1);
+  Z2 (varz2);
+  Z3 (varz3);
+  Z4 (varz4);
+  Z5 (varz5);
+
+  ! Between-outcome: contemporaneous covariances (freely estimated per time point)
+  Y1 WITH Z1 (bocov1);
+  Y2 WITH Z2 (bocov2);
+  Y3 WITH Z3 (bocov3);
+  Y4 WITH Z4 (bocov4);
+  Y5 WITH Z5 (bocov5);
+
+  [[model = 1]]
+  %cy#1%
+  [IY SY QY];
+  [IZ SZ QZ];
+
+  [[classes = 2]]
+  %cy#2%
+  [IY SY QY];
+  [IZ SZ QZ];
+  [[/classes = 2]]
+
+  [[classes = 3]]
+  %cy#2%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#3%
+  [IY SY QY];
+  [IZ SZ QZ];
+  [[/classes = 3]]
+
+  [[classes = 4]]
+  %cy#2%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#3%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#4%
+  [IY SY QY];
+  [IZ SZ QZ];
+  [[/classes = 4]]
+
+  [[classes = 5]]
+  %cy#2%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#3%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#4%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#5%
+  [IY SY QY];
+  [IZ SZ QZ];
+  [[/classes = 5]]
+
+  [[classes = 6]]
+  %cy#2%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#3%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#4%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#5%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#6%
+  [IY SY QY];
+  [IZ SZ QZ];
+  [[/classes = 6]]
+  [[/model = 1]]
+
+Model constraint:
+  New (borho1); ! Contemporaneous cross-outcome correlation
+  New (rho1);   ! Lag-1 within-outcome correlation
+  New (rho2);   ! Lag-2 within-outcome correlation
+  New (rho3);   ! Lag-3 within-outcome correlation
+  New (rho4);   ! Lag-4 within-outcome correlation
+
+  ! Between-outcome: constrain covariance = rho * SD_y * SD_z at each occasion
+  bocov1 = borho1*sqrt(vary1)*sqrt(varz1);
+  bocov2 = borho1*sqrt(vary2)*sqrt(varz2);
+  bocov3 = borho1*sqrt(vary3)*sqrt(varz3);
+  bocov4 = borho1*sqrt(vary4)*sqrt(varz4);
+  bocov5 = borho1*sqrt(vary5)*sqrt(varz5);
+
+  ! Within-outcome Y: constrain covariance = rho_lag * SD_t1 * SD_t2
+  woy1  = rho1*sqrt(vary1)*sqrt(vary2);
+  woy2  = rho2*sqrt(vary1)*sqrt(vary3);
+  woy3  = rho3*sqrt(vary1)*sqrt(vary4);
+  woy4  = rho4*sqrt(vary1)*sqrt(vary5);
+  woy5  = rho1*sqrt(vary2)*sqrt(vary3);
+  woy6  = rho2*sqrt(vary2)*sqrt(vary4);
+  woy7  = rho3*sqrt(vary2)*sqrt(vary5);
+  woy8  = rho1*sqrt(vary3)*sqrt(vary4);
+  woy9  = rho2*sqrt(vary3)*sqrt(vary5);
+  woy10 = rho1*sqrt(vary4)*sqrt(vary5);
+
+  ! Within-outcome Z: same lag structure
+  woz1  = rho1*sqrt(varz1)*sqrt(varz2);
+  woz2  = rho2*sqrt(varz1)*sqrt(varz3);
+  woz3  = rho3*sqrt(varz1)*sqrt(varz4);
+  woz4  = rho4*sqrt(varz1)*sqrt(varz5);
+  woz5  = rho1*sqrt(varz2)*sqrt(varz3);
+  woz6  = rho2*sqrt(varz2)*sqrt(varz4);
+  woz7  = rho3*sqrt(varz2)*sqrt(varz5);
+  woz8  = rho1*sqrt(varz3)*sqrt(varz4);
+  woz9  = rho2*sqrt(varz3)*sqrt(varz5);
+  woz10 = rho1*sqrt(varz4)*sqrt(varz5);
+
+OUTPUT: sampstat TECH3 TECH4 TECH9;
+
+[[classes = 3]]
+PLOT: SERIES = Y1(0) Y2(1) Y3(2) Y4(3) Y5(4) | Z1(0) Z2(1) Z3(2) Z4(3) Z5(4);
+      TYPE = PLOT3;
+[[/classes = 3]]

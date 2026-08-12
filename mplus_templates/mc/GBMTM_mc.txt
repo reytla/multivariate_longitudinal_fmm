@@ -1,0 +1,88 @@
+! =============================================================================
+! GBMTM_mc.txt: MplusAutomation template
+! -----------------------------------------------------------------------------
+! Fitted model: GBMTM, Monte Carlo (classification performance) stage
+! Purpose:      Fit the correct K=3 model to each replication
+!
+! Differences from enum template:
+!   - Fixed at K=3 (true number of classes)
+!   - STARTS = 5000 1250 (increased to reduce local maxima risk)
+!   - PROCESSORS = 16
+!   - SAVEDATA: saves posterior class probabilities (CPROB) for each subject
+! =============================================================================
+
+[[init]]
+iterators = model replication classes;
+model = 1;
+replication = 1:200;
+classes = 3;
+modelnames#model = "GBMTM";
+filename= "[[classes]]-class_[[modelnames#model]]_[[replication]].inp";
+outputDirectory = "PATH_TO_MC_DIR/[[modelnames#model]]";
+[[/init]]
+
+TITLE: [[classes]]-class [[modelnames#model]] rep [[replication]]
+DATA: FILE IS "PATH_TO_DATA_DIR/Data/Mplus_[[replication]].dat";
+
+VARIABLE:
+  NAMES = repl Y1 Y2 Y3 Y4 Y5 Z1 Z2 Z3 Z4 Z5 class_m id;
+  MISSING = .;
+  IDVARIABLE IS id;
+  USEVAR = Y1 Y2 Y3 Y4 Y5 Z1 Z2 Z3 Z4 Z5;
+  [[model = 1]]
+  CLASSES = cy([[classes]]);
+  [[/model = 1]]
+
+ANALYSIS:
+  TYPE = MIXTURE;
+  ESTIMATOR = MLR;
+  PROCESSORS = 16 (STARTS);
+  PARAMETERIZATION = LOGLINEAR;
+  [[model = 1]]
+  STARTS = 5000 1250;
+  STSCALE = 1;
+  [[/model = 1]]
+
+MODEL: %OVERALL%
+
+  IY SY QY | Y1@0 Y2@1.75 Y3@3.5 Y4@5.25 Y5@7;
+  IY-QY@0;
+  Y1-Y5 (1);
+
+  IZ SZ QZ | Z1@0 Z2@1.75 Z3@3.5 Z4@5.25 Z5@7;
+  IZ-QZ@0;
+  Z1-Z5 (2);
+
+  [[model = 1]]
+  Y1 WITH Z1 (a);
+  Y2 WITH Z2 (a);
+  Y3 WITH Z3 (a);
+  Y4 WITH Z4 (a);
+  Y5 WITH Z5 (a);
+  [[/model = 1]]
+
+  [[model = 1]]
+  %cy#1%
+  [IY SY QY];
+  [IZ SZ QZ];
+
+  [[classes = 3]]
+  %cy#2%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#3%
+  [IY SY QY];
+  [IZ SZ QZ];
+  [[/classes = 3]]
+  [[/model = 1]]
+
+OUTPUT: sampstat TECH9;
+
+[[classes = 3]]
+SAVEDATA:
+  FILE IS "PATH_TO_MC_DIR/[[modelnames#model]]/[[modelnames#model]] [[replication]].txt";
+  SAVE IS CPROB;
+  MFILE IS "PATH_TO_DATA_DIR/Data/Mplus_[[replication]].dat";
+  MNAMES = repl Y1 Y2 Y3 Y4 Y5 Z1 Z2 Z3 Z4 Z5 class_m id;
+  MSELECT ARE repl class_m;
+[[/classes = 3]]

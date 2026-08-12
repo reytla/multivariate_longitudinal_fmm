@@ -1,0 +1,138 @@
+! =============================================================================
+! MLCGA_enum.txt: MplusAutomation template
+! -----------------------------------------------------------------------------
+! Fitted model: Multilevel Latent Class Growth Analysis (MLCGA)
+! Purpose:      Class enumeration (K = 1..6) across all replications
+!
+! Model constraints:
+!   - Quadratic polynomial time trend (free means per class)
+!   - No random effects (IY-QY@0)
+!   - Residual variances FREE and time-specific (Y1-Y5 freely estimated)
+!   - Contemporaneous between-outcome correlation (Y_t WITH Z_t, equal across t)
+!
+! Difference from GBMTM: residuals are not constrained equal over time.
+! =============================================================================
+
+[[init]]
+iterators = model replication classes;
+model = 1;
+replication = 1:200;
+classes = 1:6;
+modelnames#model = "MLCGA";
+filename= "[[classes]]-class_[[modelnames#model]]_[[replication]].inp";
+outputDirectory = "PATH_TO_DATA_DIR/[[modelnames#model]]/[[replication]]";
+[[/init]]
+
+TITLE: [[classes]]-class [[modelnames#model]] rep [[replication]]
+DATA: FILE IS "PATH_TO_DATA_DIR/Data/Mplus_[[replication]].dat";
+
+VARIABLE:
+  NAMES = repl Y1 Y2 Y3 Y4 Y5 Z1 Z2 Z3 Z4 Z5 class_m id;
+  MISSING = .;
+  IDVARIABLE IS id;
+  USEVAR = Y1 Y2 Y3 Y4 Y5 Z1 Z2 Z3 Z4 Z5;
+  [[model = 1]]
+  CLASSES = cy([[classes]]);
+  [[/model = 1]]
+
+ANALYSIS:
+  TYPE = MIXTURE;
+  ESTIMATOR = MLR;
+  PROCESSORS = 4 (STARTS);
+  PARAMETERIZATION = LOGLINEAR;
+  [[model = 1]]
+  STARTS = 1000 250;
+  STITERATIONS = 20;
+  STSCALE = 1;
+  [[/model = 1]]
+
+MODEL: %OVERALL%
+
+  IY SY QY | Y1@0 Y2@1.75 Y3@3.5 Y4@5.25 Y5@7;
+  IY-QY@0;
+  Y1-Y5;      ! Residual variances FREE over time (time-varying)
+
+  IZ SZ QZ | Z1@0 Z2@1.75 Z3@3.5 Z4@5.25 Z5@7;
+  IZ-QZ@0;
+  Z1-Z5;      ! Residual variances FREE over time
+
+  [[model = 1]]
+  Y1 WITH Z1 (a);
+  Y2 WITH Z2 (a);
+  Y3 WITH Z3 (a);
+  Y4 WITH Z4 (a);
+  Y5 WITH Z5 (a);
+  [[/model = 1]]
+
+  [[model = 1]]
+  %cy#1%
+  [IY SY QY];
+  [IZ SZ QZ];
+
+  [[classes = 2]]
+  %cy#2%
+  [IY SY QY];
+  [IZ SZ QZ];
+  [[/classes = 2]]
+
+  [[classes = 3]]
+  %cy#2%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#3%
+  [IY SY QY];
+  [IZ SZ QZ];
+  [[/classes = 3]]
+
+  [[classes = 4]]
+  %cy#2%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#3%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#4%
+  [IY SY QY];
+  [IZ SZ QZ];
+  [[/classes = 4]]
+
+  [[classes = 5]]
+  %cy#2%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#3%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#4%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#5%
+  [IY SY QY];
+  [IZ SZ QZ];
+  [[/classes = 5]]
+
+  [[classes = 6]]
+  %cy#2%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#3%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#4%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#5%
+  [IY SY QY];
+  [IZ SZ QZ];
+  %cy#6%
+  [IY SY QY];
+  [IZ SZ QZ];
+  [[/classes = 6]]
+  [[/model = 1]]
+
+OUTPUT: sampstat TECH3 TECH4 TECH9;
+
+[[classes = 3]]
+PLOT: SERIES = Y1(0) Y2(1) Y3(2) Y4(3) Y5(4) | Z1(0) Z2(1) Z3(2) Z4(3) Z5(4);
+      TYPE = PLOT3;
+[[/classes = 3]]
