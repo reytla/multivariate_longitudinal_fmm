@@ -308,8 +308,8 @@ This section will be updated with full citation details upon publication.
 @article{,
   title   = {Robustness of multivariate longitudinal finite mixture models
              to covariance misspecification},
-  journal = {},
-  year    = {},
-  doi     = {}
+  journal = {Journal of Statistical Computation and Simulation},
+  year    = {2026},
+  doi     = {https://doi.org/10.1080/00949655.2026.2724035}
 }
 ```
